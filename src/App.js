@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { isEmpty, set, size } from "lodash";
+import { isEmpty} from "lodash";
 import add from "./img/Add.png";
 import remove from "./img/Bin.png";
 import cancel from "./img/Cancel.png";
@@ -40,7 +40,16 @@ function App() {
   const validForm = () => {
     let isValid = true;
     setError(null);
-    if (isEmpty(pet)) {
+    if (
+      isEmpty(pet.address) ||
+      isEmpty(pet.date) ||
+      isEmpty(pet.email) ||
+      isEmpty(pet.name) ||
+      isEmpty(pet.owner) ||
+      isEmpty(pet.phone) ||
+      isEmpty(pet.race) ||
+      isEmpty(pet.type)
+    ) {
       setError("Debe completar todos los campos");
       isValid = false;
     }
@@ -74,17 +83,68 @@ function App() {
       },
     ]);
 
+    resetPet();
+    closeModal();
+  };
+  const deletePet = async (id) => {
+    console.log(id);
+    const result = await deleteDocument("vet", id);
+    if (!result.statusResponse) {
+      setError(result.error);
+      return;
+    }
+    const filteredPets = pets.filter((pet) => pet.id !== id);
+    console.log(filteredPets);
+    setTpets(filteredPets);
+  };
+  const editPet = (pet) => {
+    setid(pet.id);
     setPet({
-      address: "",
-    date: "",
-    email: "",
-    name: "",
-    owner: "",
-    phone: "",
-    race: "",
-    type: "",
+      address: pet.address,
+      date: pet.date,
+      email: pet.email,
+      name: pet.name,
+      owner: pet.owner,
+      phone: pet.phone,
+      race: pet.race,
+      type: pet.type,
     });
-    closeModal()
+    seteditMode(true);
+    openModal();
+  };
+  const updatePet = async (e) => {
+    e.preventDefault();
+
+    if (!validForm()) {
+      return;
+    }
+
+    const result = await updateDocument("vet", id, pet);
+    if (!result.statusResponse) {
+      setError(result.error);
+      return;
+    }
+
+    const editedPets = pets.map((item) =>
+      item.id === id
+        ? {
+            id,
+            address: pet.address,
+            date: pet.date,
+            email: pet.email,
+            name: pet.name,
+            owner: pet.owner,
+            phone: pet.phone,
+            race: pet.race,
+            type: pet.type,
+          }
+        : item
+    );
+    setTpets(editedPets);
+    seteditMode(false);
+    setid("");
+    resetPet()
+    closeModal();
   };
 
   const handleInputChange = (event) => {
@@ -101,7 +161,22 @@ function App() {
   const closeModal = () => {
     const modal = document.getElementById("myModal");
     modal.style.display = "none";
+    seteditMode(false);
+    setError(null)
+    resetPet()
   };
+  const resetPet = () =>{
+    setPet({
+      address: "",
+      date: "",
+      email: "",
+      name: "",
+      owner: "",
+      phone: "",
+      race: "",
+      type: "",
+    });
+  }
 
   return (
     <div>
@@ -111,7 +186,10 @@ function App() {
             <h1>Mascotas</h1>
           </div>
           <div className="col-sm-1">
-            <button className="btn btn-light float-right">
+            <button
+              className="btn btn-light float-right"
+              onClick={() => openModal()}
+            >
               <img src={add} width="32" height="32" />
             </button>
           </div>
@@ -146,11 +224,15 @@ function App() {
                     <button
                       type="button"
                       className="btn btn-light mx-2"
-                      onClick={() => openModal()}
+                      onClick={() => editPet(pet)}
                     >
                       <img src={edit} width="32" height="32" />
                     </button>
-                    <button type="button" className="btn btn-light">
+                    <button
+                      type="button"
+                      className="btn btn-light"
+                      onClick={() => deletePet(pet.id)}
+                    >
                       <img src={remove} width="32" height="32" />
                     </button>
                   </div>
@@ -170,19 +252,20 @@ function App() {
       >
         <div className="modal-dialog">
           <div className="modal-content">
-            <div className="modal-header bg-info">
-              <h5 className="modal-title" id="ModalLabel">
-                Modal title
-              </h5>
-            </div>
-            <form onSubmit={addPet}>
-              <div className="modal-body">
+            <form onSubmit={editMode ? updatePet : addPet}>
+              <div className="modal-header bg-info">
+                <h5 className="modal-title" id="ModalLabel">
+                  {editMode ? "Editar Mascota" : "Agregar Mascota"}
+                </h5>
+              </div>
+              <div className="modal-body">                
                 <input
                   type="text"
                   name="name"
                   className="form-control mb-2"
                   placeholder="Nombre"
                   onChange={handleInputChange}
+                  value={pet.name}
                 ></input>
                 <input
                   type="text"
@@ -190,6 +273,7 @@ function App() {
                   className="form-control mb-2"
                   placeholder="Tipo"
                   onChange={handleInputChange}
+                  value={pet.type}
                 ></input>
                 <input
                   type="text"
@@ -197,6 +281,7 @@ function App() {
                   className="form-control mb-2"
                   placeholder="Raza"
                   onChange={handleInputChange}
+                  value={pet.race}
                 ></input>
                 <input
                   type="text"
@@ -204,6 +289,7 @@ function App() {
                   className="form-control mb-2"
                   placeholder="Fecha de nacimiento"
                   onChange={handleInputChange}
+                  value={pet.date}
                 ></input>
                 <input
                   type="text"
@@ -211,6 +297,7 @@ function App() {
                   className="form-control mb-2"
                   placeholder="propietario"
                   onChange={handleInputChange}
+                  value={pet.owner}
                 ></input>
                 <input
                   type="text"
@@ -218,6 +305,7 @@ function App() {
                   className="form-control mb-2"
                   placeholder="Teléfono"
                   onChange={handleInputChange}
+                  value={pet.phone}
                 ></input>
                 <input
                   type="text"
@@ -225,6 +313,7 @@ function App() {
                   className="form-control mb-2"
                   placeholder="Dirección"
                   onChange={handleInputChange}
+                  value={pet.address}
                 ></input>
                 <input
                   type="text"
@@ -232,7 +321,9 @@ function App() {
                   className="form-control mb-2"
                   placeholder="Email"
                   onChange={handleInputChange}
+                  value={pet.email}
                 ></input>
+                {error && <span className="text-danger">{error}</span>}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-light" type="submit">
