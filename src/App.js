@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { isEmpty} from "lodash";
+import { isEmpty, size } from "lodash";
 import add from "./img/Add.png";
 import remove from "./img/Bin.png";
 import cancel from "./img/Cancel.png";
 import save from "./img/Diskette.png";
 import edit from "./img/Pen.png";
+import noPet from "./img/noPet.png";
 import {
   addDocument,
   getCollection,
@@ -27,6 +28,7 @@ function App() {
   const [editMode, seteditMode] = useState(false);
   const [id, setid] = useState("");
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -96,6 +98,7 @@ function App() {
     const filteredPets = pets.filter((pet) => pet.id !== id);
     console.log(filteredPets);
     setTpets(filteredPets);
+    closeAlert();
   };
   const editPet = (pet) => {
     setid(pet.id);
@@ -143,7 +146,7 @@ function App() {
     setTpets(editedPets);
     seteditMode(false);
     setid("");
-    resetPet()
+    resetPet();
     closeModal();
   };
 
@@ -162,10 +165,23 @@ function App() {
     const modal = document.getElementById("myModal");
     modal.style.display = "none";
     seteditMode(false);
-    setError(null)
-    resetPet()
+    setError(null);
+    resetPet();
   };
-  const resetPet = () =>{
+  const openAlert = (id) => {
+    const found = pets.find((pet) => pet.id === id);
+    setMessage(
+      `¿Está seguro de que desea eliminar a ${found.name} de la lista de mascotas?`
+    );
+    setid(id);
+    const modal = document.getElementById("alert");
+    modal.style.display = "block";
+  };
+  const closeAlert = () => {
+    const modal = document.getElementById("alert");
+    modal.style.display = "none";
+  };
+  const resetPet = () => {
     setPet({
       address: "",
       date: "",
@@ -176,71 +192,86 @@ function App() {
       race: "",
       type: "",
     });
-  }
+  };
 
   return (
     <div>
       <div className="container mt-5">
-        <div className="row">
-          <div className="col-sm-11">
-            <h1>Mascotas</h1>
+        <div className="d-flex bd-highlight">
+          <div className="p-2 w-100 bd-highlight">
+            <h1>
+              <span className="badge bg-info">Mascotas {size(pets)}</span>
+            </h1>
           </div>
-          <div className="col-sm-1">
-            <button
-              className="btn btn-light float-right"
-              onClick={() => openModal()}
-            >
+          <div className="p-2 flex-shrink-1 bd-highlight">
+            <button className="btn btn-light" onClick={() => openModal()}>
               <img src={add} width="32" height="32" />
             </button>
           </div>
         </div>
+        <hr />
       </div>
 
-      <hr />
-
       <div className="container mt-5">
-        <div className="row">
-          {pets.map((pet) => (
-            <div className="col-sm-4 mb-2" key={pet.id}>
-              <div className="card border-primary ">
-                <div className="card-header bg-info">Nombre: {pet.name}</div>
-                <div className="card-body">
-                  <ul className="list-group list-group-flush">
-                    <li className="list-group-item">Tipo: {pet.type} </li>
-                    <li className="list-group-item">Raza: {pet.race}</li>
-                    <li className="list-group-item">
-                      Fecha de nacimiento: {pet.date}
-                    </li>
-                    <li className="list-group-item">
-                      propietario: {pet.owner}
-                    </li>
-                    <li className="list-group-item">Teléfono: {pet.phone} </li>
-                    <li className="list-group-item">
-                      Dirección: {pet.address}
-                    </li>
-                    <li className="list-group-item">Email: {pet.email}</li>
-                  </ul>
-                  <div className="card-footer bg-transparent border-primary">
+        {size(pets) === 0 ? (
+          <div>
+            <div className="d-flex justify-content-center">
+              <img src={noPet} width="256" height="256"></img>
+            </div>
+            <div className="alert alert-info text-center" role="alert">
+              <h1>No hay mascotas registradas en este momento</h1>
+            </div>
+          </div>
+        ) : (
+          <div className="row">
+            {pets.map((pet) => (
+              <div className="col-sm-4 col-md-offset-6 mb-2" key={pet.id}>
+                <div className="card border-primary ">
+                  <div className="card-header bg-info">
+                   <b>Nombre: {pet.name}</b> 
                     <button
                       type="button"
-                      className="btn btn-light mx-2"
+                      className="btn btn-info mx-2 float-end"
                       onClick={() => editPet(pet)}
                     >
-                      <img src={edit} width="32" height="32" />
+                      <img src={edit} width="24" height="24" />
                     </button>
                     <button
                       type="button"
-                      className="btn btn-light"
-                      onClick={() => deletePet(pet.id)}
+                      className="btn btn-info float-end"
+                      onClick={() => openAlert(pet.id)}
                     >
-                      <img src={remove} width="32" height="32" />
+                      <img src={remove} width="24" height="24" />
                     </button>
+                  </div>
+                  <div className="card-body">
+                    <div>
+                      <b>Tipo:</b> {pet.type}{" "}
+                    </div>
+                    <div>
+                      <b>Raza:</b> {pet.race}
+                    </div>
+                    <div>
+                      <b>Fecha de nacimiento:</b> {pet.date}
+                    </div>
+                    <div>
+                      <b>propietario:</b> {pet.owner}
+                    </div>
+                    <div>
+                      <b>Teléfono:</b> {pet.phone}{" "}
+                    </div>
+                    <div>
+                      <b>Dirección:</b> {pet.address}
+                    </div>
+                    <div>
+                      <b>Email:</b> {pet.email}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div
@@ -258,12 +289,12 @@ function App() {
                   {editMode ? "Editar Mascota" : "Agregar Mascota"}
                 </h5>
               </div>
-              <div className="modal-body">                
+              <div className="modal-body">
                 <input
                   type="text"
                   name="name"
                   className="form-control mb-2"
-                  placeholder="Nombre"
+                  placeholder="Nombre de la mascota"
                   onChange={handleInputChange}
                   value={pet.name}
                 ></input>
@@ -284,7 +315,7 @@ function App() {
                   value={pet.race}
                 ></input>
                 <input
-                  type="text"
+                  type="date"
                   name="date"
                   className="form-control mb-2"
                   placeholder="Fecha de nacimiento"
@@ -292,15 +323,15 @@ function App() {
                   value={pet.date}
                 ></input>
                 <input
-                  type="text"
+                  type="name"
                   name="owner"
                   className="form-control mb-2"
-                  placeholder="propietario"
+                  placeholder="Nombre del propietario"
                   onChange={handleInputChange}
                   value={pet.owner}
                 ></input>
                 <input
-                  type="text"
+                  type="tel"
                   name="phone"
                   className="form-control mb-2"
                   placeholder="Teléfono"
@@ -308,7 +339,7 @@ function App() {
                   value={pet.phone}
                 ></input>
                 <input
-                  type="text"
+                  type="address-line1, address-line2, address-line3, address-level4, address-level3, address-level2, address-level1"
                   name="address"
                   className="form-control mb-2"
                   placeholder="Dirección"
@@ -316,16 +347,16 @@ function App() {
                   value={pet.address}
                 ></input>
                 <input
-                  type="text"
+                  type="email"
                   name="email"
                   className="form-control mb-2"
                   placeholder="Email"
                   onChange={handleInputChange}
                   value={pet.email}
                 ></input>
-                {error && <span className="text-danger">{error}</span>}
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer border-primary">
+                {error && <span className="text-danger">{error}</span>}
                 <button type="button" className="btn btn-light" type="submit">
                   <img src={save} width="32" height="32" />
                 </button>
@@ -338,6 +369,35 @@ function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <div className="modal" tabIndex="-1" id="alert">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header bg-warning">
+              <h5 className="modal-title">Advertencia</h5>
+            </div>
+            <div className="modal-body">
+              <p>{message}</p>
+            </div>
+            <div className="modal-footer border-primary">
+              <button
+                type="button"
+                className="btn btn-light"
+                onClick={() => closeAlert()}
+              >
+                <img src={cancel} width="32" height="32" />
+              </button>
+              <button
+                type="button"
+                className="btn btn-light"
+                onClick={() => deletePet(id)}
+              >
+                <img src={remove} width="32" height="32" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
